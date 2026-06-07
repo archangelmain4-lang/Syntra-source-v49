@@ -1,0 +1,171 @@
+name: Build & Release DMG
+
+on:
+  push:
+    branches:
+      - main
+      - master
+    tags:
+      - "v*.*.*"
+  pull_request:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+
+jobs:
+  # ────────────────────────────────────────────────────────────────────────────
+  # Build one job per architecture so they run in parallel
+  # ────────────────────────────────────────────────────────────────────────────
+  build:
+    name: Build (${{ matrix.arch }})
+    runs-on: macos-15          # Apple Silicon runner with Xcode 16 default (also cross-compiles for x86_64)
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: arm64
+            sdk_arch: arm64
+            xcode_arch: arm64
+          - arch: x86_64
+            sdk_arch: x86_64
+            xcode_arch: x86_64
+
+    steps:
+      # ── Checkout ────────────────────────────────────────────────────────────
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ── Install xcodegen ────────────────────────────────────────────────────
+      - name: Install xcodegen
+        run: |
+          brew install xcodegen
+
+      # ── Generate Xcode project ──────────────────────────────────────────────
+      - name: Generate Xcode project from project.yml
+        run: xcodegen generate
+
+      # ── Resolve SPM packages (Sparkle) ──────────────────────────────────────
+      - name: Resolve Swift Package Manager dependencies
+        run: |
+          xcodebuild \
+            -resolvePackageDependencies \
+            -project "Syntra.xcodeproj" \
+            -scheme "Syntra" \
+            -clonedSourcePackagesDirPath .spm-packages
+
+      # ── Build ────────────────────────────────────────────────────────────────
+      - name: Build Syntra (${{ matrix.arch }})
+        run: |
+          xcodebuild \
+            -project "Syntra.xcodeproj" \
+            -scheme "Syntra" \
+            -configuration Release \
+            -arch ${{ matrix.xcode_arch }} \
+            -sdk macosx \
+            -clonedSourcePackagesDirPath .spm-packages \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            ONLY_ACTIVE_ARCH=NO \
+            DEPLOYMENT_POSTPROCESSING=YES \
+            STRIP_INSTALLED_PRODUCT=YES \
+            COPY_PHASE_STRIP=YES \
+            MACOSX_DEPLOYMENT_TARGET=12.5 \
+            DSTROOT="${{ github.workspace }}/build/${{ matrix.arch }}" \
+            install
+
+      # ── Locate app bundle ─────────────────────────────────────────────────
+      - name: Locate built .app bundle
+        id: locate_app
+        run: |
+          APP=$(find "${{ github.workspace }}/build/${{ matrix.arch }}" -name "*.app" -maxdepth 6 | head -1)
+          echo "APP_PATH=${APP}" >> "$GITHUB_OUTPUT"
+          echo "Found app: ${APP}"
+
+      # ── Package DMG ──────────────────────────────────────────────────────────
+      - name: Create DMG for ${{ matrix.arch }}
+        run: |
+          chmod +x scripts/create_dmg.sh
+          VERSION="${{ github.ref_name }}"
+          # Strip leading "v" from version tags (v1.0.0 → 1.0.0)
+          VERSION="${VERSION#v}"
+          # Fall back to "dev" for branch builds
+          if [[ "$VERSION" == "main" || "$VERSION" == "master" || -z "$VERSION" ]]; then
+            VERSION="dev-$(git rev-parse --short HEAD)"
+          fi
+          scripts/create_dmg.sh \
+            "${{ steps.locate_app.outputs.APP_PATH }}" \
+            "${{ matrix.arch }}" \
+            "${VERSION}"
+
+      # ── Upload DMG as artifact ────────────────────────────────────────────
+      - name: Upload DMG artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Syntra-${{ matrix.arch }}-dmg
+          path: "*.dmg"
+          retention-days: 30
+          if-no-files-found: error
+
+  # ────────────────────────────────────────────────────────────────────────────
+  # Create a GitHub Release with both DMGs when a version tag is pushed
+  # ────────────────────────────────────────────────────────────────────────────
+  release:
+    name: Create GitHub Release
+    needs: build
+    runs-on: ubuntu-latest
+    # Only run on version tags (v1.0.0, v2.3.1, etc.)
+    if: startsWith(github.ref, 'refs/tags/v')
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download arm64 DMG
+        uses: actions/download-artifact@v4
+        with:
+          name: Syntra-arm64-dmg
+          path: release-assets/
+
+      - name: Download x86_64 DMG
+        uses: actions/download-artifact@v4
+        with:
+          name: Syntra-x86_64-dmg
+          path: release-assets/
+
+      - name: List release assets
+        run: ls -lh release-assets/
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "Syntra ${{ github.ref_name }}"
+          body: |
+            ## Syntra ${{ github.ref_name }}
+
+            ### Download
+
+            | Architecture | File |
+            |---|---|
+            | Apple Silicon (M1/M2/M3/M4) | `Syntra-*-arm64.dmg` |
+            | Intel Mac | `Syntra-*-x86_64.dmg` |
+
+            **Requirements:** macOS 12.5 Monterey or later
+
+            ### Installation
+            1. Download the correct DMG for your Mac
+            2. Open the DMG and drag **Syntra** into your Applications folder
+            3. Right-click the app and choose **Open** on first launch (bypasses Gatekeeper for unsigned builds)
+            4. Grant **Accessibility** and **Screen Recording** permissions when prompted
+
+            ### ⚠️ Unsigned Build
+            These builds are unsigned (no Apple Developer account required for open source).
+            macOS will warn you — right-click → Open to bypass the warning.
+          files: release-assets/*.dmg
+          draft: false
+          prerelease: ${{ contains(github.ref_name, '-beta') || contains(github.ref_name, '-rc') || contains(github.ref_name, '-alpha') }}
+          generate_release_notes: true
