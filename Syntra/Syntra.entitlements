@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Accessibility API — required for global keyboard event tap and reading selected text -->
+	<key>com.apple.security.personal-information.accessibility</key>
+	<true/>
+
+	<!-- Screen recording — required for ScreenCaptureKit (OCR + screenshot capture) -->
+	<!-- NOTE: The original entitlements file was missing this. Without it, screen capture  -->
+	<!-- always fails silently on macOS 12+ even after the user grants permission.          -->
+	<key>com.apple.security.personal-information.screen-capture</key>
+	<true/>
+
+	<!-- Outgoing network connections to the AI backend (wss://api.syntra.cc) -->
+	<key>com.apple.security.network.client</key>
+	<true/>
+
+	<!-- Apple Events — required for reading the active browser URL via AppleScript -->
+	<key>com.apple.security.automation.apple-events</key>
+	<true/>
+</dict>
+</plist>

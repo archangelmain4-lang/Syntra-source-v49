@@ -1,0 +1,89 @@
+name: Syntra
+options:
+  bundleIdPrefix: cc.syntra
+  deploymentTarget:
+    macOS: "12.5"
+  xcodeVersion: "15.0"
+  generateEmptyDirectories: true
+  createIntermediateGroups: true
+
+packages:
+  Sparkle:
+    url: https://github.com/sparkle-project/Sparkle
+    from: 2.6.4
+  Lottie:
+    url: https://github.com/airbnb/lottie-ios
+    from: 4.5.0
+
+settings:
+  base:
+    PRODUCT_NAME: "Syntra"
+    PRODUCT_BUNDLE_IDENTIFIER: cc.syntra.desktop
+    MARKETING_VERSION: "1.0.0"
+    CURRENT_PROJECT_VERSION: "1"
+    SWIFT_VERSION: "5.9"
+    MACOSX_DEPLOYMENT_TARGET: "12.5"
+    CODE_SIGN_STYLE: Manual
+    CODE_SIGNING_REQUIRED: "NO"
+    CODE_SIGNING_ALLOWED: "NO"
+    ENABLE_HARDENED_RUNTIME: "NO"
+    INFOPLIST_FILE: "Syntra/Info.plist"
+    ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+    LD_RUNPATH_SEARCH_PATHS: "@executable_path/../Frameworks"
+    ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES: "YES"
+    COMBINE_HIDPI_IMAGES: "YES"
+    DEBUG_INFORMATION_FORMAT: dwarf-with-dsym
+
+targets:
+  Syntra:
+    type: application
+    platform: macOS
+    deploymentTarget: "12.5"
+
+    info:
+      path: "Syntra/Info.plist"
+
+    entitlements:
+      path: "Syntra/Syntra.entitlements"
+
+    sources:
+      - path: "Syntra"
+        excludes:
+          - "**/*.md"
+          - "**/.DS_Store"
+          - "**/Preview Content/**"
+          - "**/Info.plist"
+
+    resources:
+      - path: "Syntra/Assets.xcassets"
+      - path: "Syntra/Fonts/Inter-VariableFont_opsz,wght.ttf"
+      - path: "Syntra/Fonts/Inter-Italic-VariableFont_opsz,wght.ttf"
+      - path: "Syntra/Fonts/Syncopate-Bold.ttf"
+      - path: "Syntra/Fonts/Syncopate-Regular.ttf"
+      - path: "Syntra/welcome_animation.json"
+
+    dependencies:
+      - package: Sparkle
+        product: Sparkle
+      - package: Lottie
+        product: Lottie
+
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: cc.syntra.desktop
+        INFOPLIST_FILE: "Syntra/Info.plist"
+        CODE_SIGN_ENTITLEMENTS: "Syntra/Syntra.entitlements"
+        ARCHS: "$(ARCHS_STANDARD)"
+        VALID_ARCHS: "arm64 x86_64"
+        EXCLUDED_ARCHS: ""
+        ONLY_ACTIVE_ARCH: "NO"
+        SWIFT_OPTIMIZATION_LEVEL: "-O"
+        GCC_OPTIMIZATION_LEVEL: "s"
+      configs:
+        Debug:
+          SWIFT_OPTIMIZATION_LEVEL: "-Onone"
+          GCC_OPTIMIZATION_LEVEL: "0"
+          ONLY_ACTIVE_ARCH: "YES"
+        Release:
+          SWIFT_OPTIMIZATION_LEVEL: "-O"
+          ONLY_ACTIVE_ARCH: "NO"

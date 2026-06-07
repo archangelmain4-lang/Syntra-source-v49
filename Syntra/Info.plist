@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>$(DEVELOPMENT_LANGUAGE)</string>
+
+	<key>CFBundleDisplayName</key>
+	<string>Syntra</string>
+
+	<key>CFBundleExecutable</key>
+	<string>$(EXECUTABLE_NAME)</string>
+
+	<key>CFBundleIconFile</key>
+	<string></string>
+
+	<key>CFBundleIconName</key>
+	<string>AppIcon</string>
+
+	<key>CFBundleIdentifier</key>
+	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+
+	<key>CFBundleName</key>
+	<string>$(PRODUCT_NAME)</string>
+
+	<key>CFBundlePackageType</key>
+	<string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
+
+	<key>CFBundleShortVersionString</key>
+	<string>$(MARKETING_VERSION)</string>
+
+	<key>CFBundleVersion</key>
+	<string>$(CURRENT_PROJECT_VERSION)</string>
+
+	<key>LSMinimumSystemVersion</key>
+	<string>$(MACOSX_DEPLOYMENT_TARGET)</string>
+
+	<key>NSPrincipalClass</key>
+	<string>NSApplication</string>
+
+	<key>NSHighResolutionCapable</key>
+	<true/>
+
+	<key>NSSupportsAutomaticGraphicsSwitching</key>
+	<true/>
+
+	<!-- LSUIElement=true hides the app from the Dock and app switcher (menu-bar-only app) -->
+	<key>LSUIElement</key>
+	<true/>
+
+	<key>NSHumanReadableCopyright</key>
+	<string>Copyright © 2025 Syntra. All rights reserved.</string>
+
+	<!-- URL Scheme so the website can call back into the app after auth -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>cc.syntra.desktop</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>syntra</string>
+			</array>
+		</dict>
+	</array>
+
+	<!-- Register custom fonts bundled inside the app -->
+	<key>ATSApplicationFontsPath</key>
+	<string>Fonts</string>
+
+	<!-- Permission usage descriptions (shown in System Settings when requesting permissions) -->
+	<key>NSScreenCaptureUsageDescription</key>
+	<string>Syntra needs screen capture access to read on-screen content and provide AI assistance based on what you are viewing.</string>
+
+	<key>NSAppleEventsUsageDescription</key>
+	<string>Syntra uses Apple Events to read your active browser URL for context-aware AI assistance.</string>
+
+	<!-- Sparkle auto-updater -->
+	<key>SUFeedURL</key>
+	<string>https://syntra.cc/appcast.xml</string>
+
+	<key>SUEnableAutomaticChecks</key>
+	<true/>
+
+	<!-- App Store category (used even for direct distribution) -->
+	<key>LSApplicationCategoryType</key>
+	<string>public.app-category.productivity</string>
+</dict>
+</plist>
